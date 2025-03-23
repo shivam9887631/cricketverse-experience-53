@@ -13,7 +13,8 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   DocumentReference,
-  CollectionReference
+  CollectionReference,
+  WithFieldValue
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -27,9 +28,10 @@ export const createDocument = async <T extends DocumentData>(
   id?: string
 ): Promise<string> => {
   try {
+    const collectionRef = collection(db, collectionPath);
     const docRef = id 
-      ? doc(db, collectionPath, id) 
-      : doc(collection(db, collectionPath));
+      ? doc(collectionRef, id) 
+      : doc(collectionRef);
     
     await setDoc(docRef, data);
     return docRef.id;
@@ -44,7 +46,8 @@ export const getDocument = async <T>(
   docId: string
 ): Promise<FirestoreDocument<T> | null> => {
   try {
-    const docRef = doc(db, collectionPath, docId);
+    const collectionRef = collection(db, collectionPath);
+    const docRef = doc(collectionRef, docId);
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
@@ -64,8 +67,9 @@ export const updateDocument = async <T extends DocumentData>(
   data: Partial<T>
 ): Promise<void> => {
   try {
-    const docRef = doc(db, collectionPath, docId);
-    await updateDoc(docRef, data);
+    const collectionRef = collection(db, collectionPath);
+    const docRef = doc(collectionRef, docId);
+    await updateDoc(docRef, data as DocumentData);
   } catch (error) {
     console.error('Error updating document:', error);
     throw error;
@@ -77,7 +81,8 @@ export const deleteDocument = async (
   docId: string
 ): Promise<void> => {
   try {
-    const docRef = doc(db, collectionPath, docId);
+    const collectionRef = collection(db, collectionPath);
+    const docRef = doc(collectionRef, docId);
     await deleteDoc(docRef);
   } catch (error) {
     console.error('Error deleting document:', error);

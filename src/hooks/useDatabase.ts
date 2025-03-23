@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, MutateOptions } from '@tanstack/react-query';
 import * as FirestoreService from '../services/firestoreService';
 
 // Generic hook for Firestore operations
@@ -9,7 +9,8 @@ export function useFirestore<T extends object>(collectionPath: string) {
   
   // Create a document
   const createMutation = useMutation({
-    mutationFn: (data: T) => FirestoreService.createDocument<T>(collectionPath, data),
+    mutationFn: ({ data, id }: { data: T; id?: string }) => 
+      FirestoreService.createDocument<T>(collectionPath, data, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [collectionPath] });
     }
@@ -59,7 +60,8 @@ export function useFirestore<T extends object>(collectionPath: string) {
   };
   
   return {
-    createDocument: createMutation.mutate,
+    createDocument: (data: T, id?: string, options?: MutateOptions<string, Error, { data: T; id?: string }, unknown>) => 
+      createMutation.mutate({ data, id }, options),
     updateDocument: updateMutation.mutate,
     deleteDocument: deleteMutation.mutate,
     useDocument,

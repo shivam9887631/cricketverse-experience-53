@@ -6,6 +6,10 @@ import MatchDatabaseIntegration from '@/components/match/MatchDatabaseIntegratio
 const MatchDetails = () => {
   const { id } = useParams<{ id: string }>();
   
+  if (!id) {
+    return <div className="container mx-auto py-8">Match ID not found</div>;
+  }
+  
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6">Match Details</h1>

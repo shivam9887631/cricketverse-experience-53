@@ -5,7 +5,7 @@ import { getAuth } from 'firebase/auth';
 
 // Firebase configuration - replace with your own values
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "YOUR_API_KEY", // Replace with your actual Firebase API key
   authDomain: "YOUR_AUTH_DOMAIN",
   projectId: "YOUR_PROJECT_ID",
   storageBucket: "YOUR_STORAGE_BUCKET",
