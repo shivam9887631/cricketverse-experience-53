@@ -28,6 +28,7 @@ const AnimationLayout = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/match" element={<MatchDetails />} />
         <Route path="/match/:id" element={<MatchDetails />} />
         <Route path="/tournament" element={<Tournament />} />
         <Route path="/players/:id" element={<PlayerProfile />} />
@@ -44,13 +45,13 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster />
-      <Sonner />
       {showSplash ? (
         <SplashScreen onComplete={() => setShowSplash(false)} />
       ) : (
         <BrowserRouter>
           <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <AnimationLayout />
           </TooltipProvider>
         </BrowserRouter>

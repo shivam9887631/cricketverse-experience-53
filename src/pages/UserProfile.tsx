@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Camera, ChevronRight, Edit, LogOut, Shield, User } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -40,7 +41,7 @@ const UserProfile = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -187,7 +188,7 @@ const UserProfile = () => {
                         
                         <div className="grid gap-2">
                           <Label htmlFor="bio">Bio</Label>
-                          <Input 
+                          <Textarea 
                             id="bio" 
                             name="bio" 
                             value={formData.bio} 
