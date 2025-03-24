@@ -10,9 +10,12 @@ import ProfileContent from '@/components/user-profile/ProfileContent';
 import useRequireAuth from '@/hooks/useRequireAuth';
 import { authService } from '@/services/authService';
 import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { generateSampleNotifications } from '@/utils/notificationUtils';
 
 const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isGeneratingNotifications, setIsGeneratingNotifications] = useState(false);
   const { currentUser } = useRequireAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -75,6 +78,30 @@ const UserProfile = () => {
     // Here you would typically update the user profile via API
   };
 
+  const handleGenerateNotifications = async () => {
+    if (!currentUser) return;
+    
+    try {
+      setIsGeneratingNotifications(true);
+      await generateSampleNotifications(currentUser.uid);
+      toast({
+        title: "Sample notifications created",
+        description: "Check your notifications page to see them",
+        variant: "default",
+      });
+      
+    } catch (error) {
+      console.error("Error generating notifications:", error);
+      toast({
+        title: "Error creating notifications",
+        description: "There was an error creating sample notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingNotifications(false);
+    }
+  };
+
   const navigationItems = [
     { icon: User, label: 'Personal Info', path: '/profile' },
     { icon: Shield, label: 'Security', path: '/profile/security' },
@@ -98,6 +125,18 @@ const UserProfile = () => {
             />
             
             <NavigationCard items={navigationItems} />
+            
+            <div className="bg-white rounded-lg shadow p-4 dark:bg-gray-800">
+              <h3 className="font-medium mb-2">Developer Tools</h3>
+              <Button 
+                onClick={handleGenerateNotifications}
+                disabled={isGeneratingNotifications}
+                size="sm"
+                className="w-full"
+              >
+                {isGeneratingNotifications ? "Generating..." : "Generate Sample Notifications"}
+              </Button>
+            </div>
           </div>
 
           <ProfileContent 
