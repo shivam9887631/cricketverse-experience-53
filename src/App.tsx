@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -45,17 +46,19 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {showSplash ? (
-        <SplashScreen onComplete={() => setShowSplash(false)} />
-      ) : (
-        <BrowserRouter>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AnimationLayout />
-          </TooltipProvider>
-        </BrowserRouter>
-      )}
+      <AuthProvider>
+        {showSplash ? (
+          <SplashScreen onComplete={() => setShowSplash(false)} />
+        ) : (
+          <BrowserRouter>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AnimationLayout />
+            </TooltipProvider>
+          </BrowserRouter>
+        )}
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

@@ -1,35 +1,136 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, User, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Trophy, User, Lock, Mail, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { authService } from '@/services/authService';
+import { useAuth } from '@/contexts/AuthContext';
+import { FirebaseError } from 'firebase/app';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    userType: 'spectator'
+  });
+  
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  
+  // If user is already logged in, redirect to home
+  useEffect(() => {
+    if (currentUser) {
+      navigate('/');
+    }
+  }, [currentUser, navigate]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate authentication delay
-    setTimeout(() => {
+    try {
+      if (isLogin) {
+        // Login
+        await authService.login(formData.email, formData.password);
+        toast({
+          title: "Login successful",
+          description: "Welcome back to CricketVerse!",
+          variant: "default",
+        });
+      } else {
+        // Register
+        await authService.register(
+          formData.email, 
+          formData.password, 
+          formData.name,
+          formData.userType
+        );
+        toast({
+          title: "Registration successful",
+          description: "Your account has been created successfully.",
+          variant: "default",
+        });
+      }
+      
+      navigate('/');
+    } catch (error) {
       setIsLoading(false);
       
+      // Handle Firebase errors
+      if (error instanceof FirebaseError) {
+        let errorMessage = "An error occurred. Please try again.";
+        
+        switch (error.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = "Email is already in use. Please try another or sign in.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "Invalid email address.";
+            break;
+          case 'auth/weak-password':
+            errorMessage = "Password is too weak. Please choose a stronger password.";
+            break;
+          case 'auth/user-not-found':
+          case 'auth/wrong-password':
+            errorMessage = "Invalid email or password.";
+            break;
+          default:
+            console.error("Authentication error:", error);
+        }
+        
+        toast({
+          title: isLogin ? "Login failed" : "Registration failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+        console.error("Unexpected error:", error);
+      }
+    }
+  };
+  
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    setIsLoading(true);
+    try {
+      if (provider === 'google') {
+        await authService.signInWithGoogle();
+      } else {
+        await authService.signInWithFacebook();
+      }
+      
       toast({
-        title: isLogin ? "Login successful" : "Registration successful",
-        description: isLogin 
-          ? "Welcome back to CricketVerse!" 
-          : "Your account has been created successfully.",
+        title: "Login successful",
+        description: "Welcome to CricketVerse!",
         variant: "default",
       });
       
       navigate('/');
-    }, 1500);
+    } catch (error) {
+      setIsLoading(false);
+      
+      toast({
+        title: "Social login failed",
+        description: "There was an error with the social login. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Social login error:", error);
+    }
   };
 
   return (
@@ -79,6 +180,8 @@ const Login = () => {
                     required
                     className="form-input pl-10 block w-full"
                     placeholder="John Doe"
+                    value={formData.name}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -100,6 +203,8 @@ const Login = () => {
                   required
                   className="form-input pl-10 block w-full"
                   placeholder="example@email.com"
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -129,6 +234,8 @@ const Login = () => {
                   required
                   className="form-input pl-10 pr-10 block w-full"
                   placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
                 />
                 <button
                   type="button"
@@ -153,7 +260,8 @@ const Login = () => {
                   id="userType"
                   name="userType"
                   className="form-input block w-full mt-2"
-                  defaultValue="spectator"
+                  value={formData.userType}
+                  onChange={handleChange}
                 >
                   <option value="spectator">Spectator</option>
                   <option value="player">Player</option>
@@ -168,7 +276,7 @@ const Login = () => {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isLoading}
-                className="btn-primary w-full flex justify-center items-center relative overflow-hidden"
+                className="btn-primary w-full flex justify-center items-center relative overflow-hidden gap-2"
               >
                 {isLoading ? (
                   <div className="flex items-center">
@@ -178,7 +286,12 @@ const Login = () => {
                     </svg>
                     Processing...
                   </div>
-                ) : isLogin ? 'Sign in' : 'Create account'}
+                ) : (
+                  <>
+                    {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    {isLogin ? 'Sign in' : 'Create account'}
+                  </>
+                )}
               </motion.button>
             </div>
           </form>
@@ -201,6 +314,8 @@ const Login = () => {
                 whileTap={{ scale: 0.97 }}
                 type="button"
                 className="btn-outline flex w-full justify-center items-center"
+                onClick={() => handleSocialLogin('google')}
+                disabled={isLoading}
               >
                 <svg className="h-5 w-5 mr-2" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
@@ -213,6 +328,8 @@ const Login = () => {
                 whileTap={{ scale: 0.97 }}
                 type="button"
                 className="btn-outline flex w-full justify-center items-center"
+                onClick={() => handleSocialLogin('facebook')}
+                disabled={isLoading}
               >
                 <svg className="h-5 w-5 mr-2" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
