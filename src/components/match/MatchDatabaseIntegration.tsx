@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore } from '@/hooks/useDatabase';
 import { useMatch } from '@/services/cricketApi';
 import { useUserData } from '@/services/customApi';
+import { toast } from '@/components/ui/use-toast';
 
 // Define types for our Firestore data
 interface UserMatch {
@@ -18,8 +19,13 @@ interface UserMatch {
   createdAt: string;
 }
 
-const MatchDatabaseIntegration = () => {
+interface MatchDatabaseIntegrationProps {
+  matchId?: string;
+}
+
+const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) => {
   const { id } = useParams<{ id: string }>();
+  const currentMatchId = matchId || id || "";
   const userId = "user123"; // This would typically come from authentication
   
   // State for notes
@@ -36,14 +42,14 @@ const MatchDatabaseIntegration = () => {
   } = useFirestore<UserMatch>("userMatches");
   
   // Get match data from Cricket API
-  const { data: matchData, isLoading: isMatchLoading } = useMatch(id || "");
+  const { data: matchData, isLoading: isMatchLoading } = useMatch(currentMatchId);
   
   // Get user data from custom API
   const { data: userData, isLoading: isUserLoading } = useUserData(userId);
   
   // Get user's match data from Firestore
   const { data: userMatchData, isLoading: isUserMatchLoading } = 
-    useDocument(`${userId}_${id}`);
+    useDocument(`${userId}_${currentMatchId}`);
   
   // Update state when userMatchData is loaded
   useEffect(() => {
@@ -56,7 +62,7 @@ const MatchDatabaseIntegration = () => {
   // Save or update notes
   const handleSaveNotes = () => {
     const data: UserMatch = {
-      matchId: id || "",
+      matchId: currentMatchId,
       userId,
       notes,
       favorite: isFavorite,
@@ -65,11 +71,22 @@ const MatchDatabaseIntegration = () => {
     
     if (userMatchData) {
       updateDocument({ 
-        id: `${userId}_${id}`, 
+        id: `${userId}_${currentMatchId}`, 
         data: { notes, favorite: isFavorite } 
       });
+      toast({
+        title: "Notes Updated",
+        description: "Your match notes have been updated successfully."
+      });
     } else {
-      createDocument(data, `${userId}_${id}`);
+      createDocument(
+        data, 
+        `${userId}_${currentMatchId}`
+      );
+      toast({
+        title: "Notes Created",
+        description: "Your match notes have been saved successfully."
+      });
     }
   };
   
@@ -78,8 +95,14 @@ const MatchDatabaseIntegration = () => {
     setIsFavorite(!isFavorite);
     if (userMatchData) {
       updateDocument({ 
-        id: `${userId}_${id}`, 
+        id: `${userId}_${currentMatchId}`, 
         data: { favorite: !isFavorite } 
+      });
+      toast({
+        title: isFavorite ? "Removed from Favorites" : "Added to Favorites",
+        description: isFavorite 
+          ? "This match has been removed from your favorites." 
+          : "This match has been added to your favorites."
       });
     }
   };
