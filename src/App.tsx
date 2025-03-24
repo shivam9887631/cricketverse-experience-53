@@ -17,6 +17,7 @@ import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
+import PlayersList from "./pages/PlayersList";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const AnimationLayout = () => {
         <Route path="/match" element={<MatchDetails />} />
         <Route path="/match/:id" element={<MatchDetails />} />
         <Route path="/tournament" element={<Tournament />} />
+        <Route path="/players" element={<PlayersList />} />
         <Route path="/players/:id" element={<PlayerProfile />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/notifications" element={<Notifications />} />
