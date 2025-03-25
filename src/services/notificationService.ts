@@ -8,7 +8,8 @@ import {
   updateDoc,
   doc,
   orderBy,
-  Timestamp
+  Timestamp,
+  getCountFromServer
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 
@@ -51,6 +52,29 @@ export const getUserNotifications = async (): Promise<Notification[]> => {
   } catch (error) {
     console.error('Error getting notifications:', error);
     throw error;
+  }
+};
+
+// Get unread notifications count
+export const getUnreadNotificationsCount = async (): Promise<number> => {
+  try {
+    if (!auth.currentUser) {
+      return 0;
+    }
+    
+    const userId = auth.currentUser.uid;
+    const notificationsRef = collection(db, 'notifications');
+    const q = query(
+      notificationsRef, 
+      where('userId', '==', userId),
+      where('isRead', '==', false)
+    );
+    
+    const snapshot = await getCountFromServer(q);
+    return snapshot.data().count;
+  } catch (error) {
+    console.error('Error getting unread notifications count:', error);
+    return 0;
   }
 };
 
