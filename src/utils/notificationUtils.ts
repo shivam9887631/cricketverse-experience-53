@@ -1,5 +1,7 @@
 
 import { addNotification } from '@/services/notificationService';
+import { Match } from '@/services/cricketApi';
+import { logMatchActivity } from './matchUtils';
 
 export const generateSampleNotifications = async (userId: string) => {
   const sampleNotifications = [
@@ -75,8 +77,9 @@ export const generateSampleNotifications = async (userId: string) => {
 };
 
 // Function to store match data in Firebase
-export const storeMatchData = async (userId: string, matchId: string, matchData: any) => {
+export const storeMatchData = async (userId: string, matchId: string, matchData: Match): Promise<boolean> => {
   try {
+    // Create a notification
     await addNotification({
       userId,
       title: 'Match Data Saved',
@@ -85,6 +88,16 @@ export const storeMatchData = async (userId: string, matchId: string, matchData:
       isRead: false,
       createdAt: new Date()
     });
+    
+    // Log the activity
+    await logMatchActivity(
+      userId,
+      matchId,
+      matchData.title,
+      'view',
+      'Saved match data to profile'
+    );
+    
     return true;
   } catch (error) {
     console.error('Error storing match data:', error);
@@ -93,7 +106,7 @@ export const storeMatchData = async (userId: string, matchId: string, matchData:
 };
 
 // Function to generate notifications for cricket events
-export const notifyUserAboutMatch = async (userId: string, matchId: string, eventType: 'start' | 'end' | 'update') => {
+export const notifyUserAboutMatch = async (userId: string, matchId: string, matchTitle: string, eventType: 'start' | 'end' | 'update') => {
   try {
     const messages = {
       start: 'A match you are following is about to start. Don\'t miss it!',
@@ -101,6 +114,7 @@ export const notifyUserAboutMatch = async (userId: string, matchId: string, even
       update: 'There has been an important update in a match you are following.'
     };
     
+    // Create notification
     await addNotification({
       userId,
       title: 'Match Update',
@@ -109,9 +123,47 @@ export const notifyUserAboutMatch = async (userId: string, matchId: string, even
       isRead: false,
       createdAt: new Date()
     });
+    
+    // Log activity
+    await logMatchActivity(
+      userId,
+      matchId,
+      matchTitle,
+      'view',
+      `Received notification: ${messages[eventType]}`
+    );
+    
     return true;
   } catch (error) {
     console.error('Error notifying user about match:', error);
+    return false;
+  }
+};
+
+// Function to generate match-related notifications based on user preferences
+export const generateMatchNotifications = async (userId: string): Promise<boolean> => {
+  try {
+    const sampleMatches = [
+      { id: '101', title: 'India vs Australia' },
+      { id: '102', title: 'England vs New Zealand' },
+      { id: '103', title: 'Pakistan vs Sri Lanka' }
+    ];
+    
+    const eventTypes: ('start' | 'end' | 'update')[] = ['start', 'end', 'update'];
+    
+    // Create 3 random notifications
+    const promises = [];
+    for (let i = 0; i < 3; i++) {
+      const match = sampleMatches[Math.floor(Math.random() * sampleMatches.length)];
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      
+      promises.push(notifyUserAboutMatch(userId, match.id, match.title, eventType));
+    }
+    
+    await Promise.all(promises);
+    return true;
+  } catch (error) {
+    console.error('Error generating match notifications:', error);
     return false;
   }
 };

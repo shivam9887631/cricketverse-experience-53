@@ -9,6 +9,7 @@ import { useMatch } from '@/services/cricketApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { storeMatchData } from '@/utils/notificationUtils';
+import { syncMatchToFirebase, logMatchActivity } from '@/utils/matchUtils';
 
 // Define types for our Firestore data
 interface UserMatch {
@@ -77,9 +78,29 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
       });
     }
   };
+
+  // Sync full match data to Firebase collection
+  const handleSyncToFirebase = async () => {
+    if (!currentUser || !matchData) return;
+    
+    try {
+      await syncMatchToFirebase(currentUser.uid, matchData);
+      
+      toast({
+        title: "Match Synced",
+        description: "Match data has been synced to Firebase."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sync match data.",
+        variant: "destructive"
+      });
+    }
+  };
   
   // Save or update notes
-  const handleSaveNotes = () => {
+  const handleSaveNotes = async () => {
     if (!currentUser) {
       toast({
         title: "Authentication Required",
@@ -97,29 +118,61 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
       createdAt: new Date().toISOString()
     };
     
-    if (userMatchData) {
-      updateDocument({ 
-        id: `${currentUser.uid}_${currentMatchId}`, 
-        data: { notes, favorite: isFavorite } 
-      });
+    try {
+      if (userMatchData) {
+        await updateDocument({ 
+          id: `${currentUser.uid}_${currentMatchId}`, 
+          data: { notes, favorite: isFavorite } 
+        });
+        
+        // Log activity
+        if (matchData) {
+          await logMatchActivity(
+            currentUser.uid,
+            currentMatchId,
+            matchData.title,
+            'note',
+            'Updated match notes'
+          );
+        }
+        
+        toast({
+          title: "Notes Updated",
+          description: "Your match notes have been updated successfully."
+        });
+      } else {
+        await createDocument(
+          data, 
+          `${currentUser.uid}_${currentMatchId}`
+        );
+        
+        // Log activity
+        if (matchData) {
+          await logMatchActivity(
+            currentUser.uid,
+            currentMatchId,
+            matchData.title,
+            'note',
+            'Created match notes'
+          );
+        }
+        
+        toast({
+          title: "Notes Created",
+          description: "Your match notes have been saved successfully."
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Notes Updated",
-        description: "Your match notes have been updated successfully."
-      });
-    } else {
-      createDocument(
-        data, 
-        `${currentUser.uid}_${currentMatchId}`
-      );
-      toast({
-        title: "Notes Created",
-        description: "Your match notes have been saved successfully."
+        title: "Error",
+        description: "Failed to save notes.",
+        variant: "destructive"
       });
     }
   };
   
   // Toggle favorite status
-  const toggleFavorite = () => {
+  const toggleFavorite = async () => {
     if (!currentUser) {
       toast({
         title: "Authentication Required",
@@ -129,18 +182,42 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
       return;
     }
     
-    setIsFavorite(!isFavorite);
+    const newFavoriteStatus = !isFavorite;
+    setIsFavorite(newFavoriteStatus);
     
-    if (userMatchData) {
-      updateDocument({ 
-        id: `${currentUser.uid}_${currentMatchId}`, 
-        data: { favorite: !isFavorite } 
-      });
+    try {
+      if (userMatchData) {
+        await updateDocument({ 
+          id: `${currentUser.uid}_${currentMatchId}`, 
+          data: { favorite: newFavoriteStatus } 
+        });
+        
+        // Log activity
+        if (matchData) {
+          await logMatchActivity(
+            currentUser.uid,
+            currentMatchId,
+            matchData.title,
+            'favorite',
+            newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites'
+          );
+        }
+        
+        toast({
+          title: newFavoriteStatus ? "Added to Favorites" : "Removed from Favorites",
+          description: newFavoriteStatus 
+            ? "This match has been added to your favorites." 
+            : "This match has been removed from your favorites."
+        });
+      }
+    } catch (error) {
+      // Revert state on error
+      setIsFavorite(!newFavoriteStatus);
+      
       toast({
-        title: isFavorite ? "Removed from Favorites" : "Added to Favorites",
-        description: isFavorite 
-          ? "This match has been removed from your favorites." 
-          : "This match has been added to your favorites."
+        title: "Error",
+        description: "Failed to update favorite status.",
+        variant: "destructive"
       });
     }
   };
@@ -152,7 +229,18 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Match Details</CardTitle>
+          <CardTitle className="flex justify-between items-center">
+            <span>Match Details</span>
+            {currentUser && matchData && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSyncToFirebase}
+              >
+                Sync to Firebase
+              </Button>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -182,17 +270,6 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
                       >
                         Save Match Data
                       </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <p className="font-medium">{matchData.status}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Date</p>
-                      <p className="font-medium">{matchData.date}</p>
                     </div>
                   </div>
                   
