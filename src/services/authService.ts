@@ -18,7 +18,11 @@ export interface UserData {
   displayName: string | null;
   email: string | null;
   photoURL: string | null;
+  phoneNumber?: string | null;
+  bio?: string | null;
+  address?: string | null;
   userType?: 'spectator' | 'player' | 'admin';
+  createdAt?: string;
 }
 
 // Authentication service
