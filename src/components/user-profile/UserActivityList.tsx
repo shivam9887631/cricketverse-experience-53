@@ -1,7 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserMatchActivity } from '@/utils/matchUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,29 +9,20 @@ import { Eye, Heart, Bookmark, Share2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { generateMatchNotifications } from '@/utils/notificationUtils';
 import { toast } from '@/components/ui/use-toast';
+import { useFirestore } from '@/hooks/useDatabase';
+import { MatchActivity } from '@/utils/matchUtils';
 
 const UserActivityList = () => {
   const { currentUser } = useAuth();
-  const [activities, setActivities] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const userId = currentUser?.uid || '';
   
-  const fetchActivities = async () => {
-    if (!currentUser) return;
-    
-    setIsLoading(true);
-    try {
-      const userActivities = await getUserMatchActivity(currentUser.uid);
-      setActivities(userActivities);
-    } catch (error) {
-      console.error('Error fetching user activities:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  useEffect(() => {
-    fetchActivities();
-  }, [currentUser]);
+  // Use real-time updates for match activities
+  const { useRealtimeCollection } = useFirestore<MatchActivity>('matchActivities');
+  const { data: activities, loading: isLoading, error } = useRealtimeCollection(
+    userId ? [{ field: 'userId', operator: '==', value: userId }] : [],
+    'timestamp',
+    'desc'
+  );
   
   const handleGenerateNotifications = async () => {
     if (!currentUser) return;
@@ -45,9 +35,6 @@ const UserActivityList = () => {
           title: "Notifications Generated",
           description: "Sample match notifications have been generated."
         });
-        
-        // Refresh activities
-        fetchActivities();
       }
     } catch (error) {
       toast({
@@ -72,6 +59,10 @@ const UserActivityList = () => {
         return <Eye className="h-4 w-4" />;
     }
   };
+
+  if (error) {
+    console.error("Error fetching activities:", error);
+  }
   
   return (
     <Card>
@@ -96,7 +87,7 @@ const UserActivityList = () => {
               </div>
             ))}
           </div>
-        ) : activities.length > 0 ? (
+        ) : activities && activities.length > 0 ? (
           <div className="space-y-4">
             {activities.map((activity) => (
               <div key={activity.id} className="flex items-start gap-3 pb-3 border-b">
@@ -112,7 +103,7 @@ const UserActivityList = () => {
                     <p className="text-sm text-muted-foreground">{activity.details}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(activity.timestamp.toDate()), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(activity.timestamp.toDate ? activity.timestamp.toDate() : activity.timestamp), { addSuffix: true })}
                   </p>
                 </div>
               </div>

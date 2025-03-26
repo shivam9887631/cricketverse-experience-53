@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient, MutateOptions } from '@tanstack/react-query';
 import * as FirestoreService from '../services/firestoreService';
+import { useFirestoreDocument, useFirestoreCollection } from './useFirestoreRealtime';
 
 // Generic hook for Firestore operations
 export function useFirestore<T extends object>(collectionPath: string) {
@@ -33,7 +34,7 @@ export function useFirestore<T extends object>(collectionPath: string) {
     }
   });
   
-  // Get a document by ID
+  // Get a document by ID - standard fetch version
   const useDocument = (id: string | undefined) => {
     return useQuery({
       queryKey: [collectionPath, id],
@@ -42,7 +43,7 @@ export function useFirestore<T extends object>(collectionPath: string) {
     });
   };
   
-  // Query documents
+  // Query documents - standard fetch version
   const useDocuments = (
     conditions: { field: string; operator: string; value: any }[] = [],
     orderByField?: string,
@@ -58,6 +59,19 @@ export function useFirestore<T extends object>(collectionPath: string) {
       )
     });
   };
+
+  // Real-time hooks
+  const useRealtimeDocument = (id: string | undefined) => {
+    return useFirestoreDocument<T>(collectionPath, id);
+  };
+
+  const useRealtimeCollection = (
+    conditions: { field: string; operator: string; value: any }[] = [],
+    orderByField?: string,
+    orderDirection?: 'asc' | 'desc'
+  ) => {
+    return useFirestoreCollection<T>(collectionPath, conditions, orderByField, orderDirection);
+  };
   
   return {
     createDocument: (data: T, id?: string, options?: MutateOptions<string, Error, { data: T; id?: string }, unknown>) => 
@@ -66,6 +80,8 @@ export function useFirestore<T extends object>(collectionPath: string) {
     deleteDocument: deleteMutation.mutate,
     useDocument,
     useDocuments,
+    useRealtimeDocument,
+    useRealtimeCollection,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore } from '@/hooks/useDatabase';
 import { useMatch } from '@/services/cricketApi';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { storeMatchData } from '@/utils/notificationUtils';
 import { syncMatchToFirebase, logMatchActivity } from '@/utils/matchUtils';
 
@@ -33,11 +32,11 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
   const [notes, setNotes] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
   
-  // Use our Firebase hook
+  // Use our Firebase hook with real-time updates
   const {
     createDocument,
     updateDocument,
-    useDocument,
+    useRealtimeDocument,
     isCreating,
     isUpdating
   } = useFirestore<UserMatch>("userMatches");
@@ -45,9 +44,11 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
   // Get match data from Cricket API
   const { data: matchData, isLoading: isMatchLoading } = useMatch(currentMatchId);
   
-  // Get user's match data from Firestore
-  const { data: userMatchData, isLoading: isUserMatchLoading } = 
-    useDocument(userId ? `${userId}_${currentMatchId}` : undefined);
+  // Get user's match data from Firestore in real-time
+  const { 
+    data: userMatchData, 
+    loading: isUserMatchLoading 
+  } = useRealtimeDocument(userId ? `${userId}_${currentMatchId}` : undefined);
   
   // Update state when userMatchData is loaded
   useEffect(() => {
@@ -56,6 +57,9 @@ const MatchDatabaseIntegration = ({ matchId }: MatchDatabaseIntegrationProps) =>
       setIsFavorite(userMatchData.favorite || false);
     }
   }, [userMatchData]);
+
+  // Toast hook
+  const { toast } = useToast();
 
   // Save match data to Firebase
   const saveMatchToFirebase = async () => {
