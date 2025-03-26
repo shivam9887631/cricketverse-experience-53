@@ -1,10 +1,10 @@
 
 import React from 'react';
 import Layout from '@/components/Layout';
-import { ProfileHeader } from '@/components/user-profile/ProfileHeader';
-import { ProfileContent } from '@/components/user-profile/ProfileContent';
-import { UserActivityList } from '@/components/user-profile/UserActivityList';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import ProfileHeader from '@/components/user-profile/ProfileHeader';
+import ProfileContent from '@/components/user-profile/ProfileContent';
+import UserActivityList from '@/components/user-profile/UserActivityList';
+import useRequireAuth from '@/hooks/useRequireAuth';
 
 const UserProfile = () => {
   // Redirect to login if not authenticated
