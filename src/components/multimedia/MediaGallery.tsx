@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Image, Plus } from 'lucide-react';
+import { Image, Plus, Upload, SmartphoneNfc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getCapacitorCamera } from '@/services/capacitorService';
 import { CameraResultType, CameraSource } from '@capacitor/camera';
+import { Card } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 interface MediaItem {
   id: string;
@@ -12,10 +14,19 @@ interface MediaItem {
   type: 'image' | 'video';
 }
 
+const SAMPLE_IMAGES = [
+  'https://placehold.co/600x400/png?text=Sample+1',
+  'https://placehold.co/600x400/png?text=Sample+2',
+  'https://placehold.co/600x400/png?text=Sample+3',
+  'https://placehold.co/600x400/png?text=Sample+4'
+];
+
 const MediaGallery = () => {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const { toast } = useToast();
 
   const pickFromGallery = async () => {
     try {
@@ -24,10 +35,25 @@ const MediaGallery = () => {
       
       if (!camera) {
         // Web fallback for development
-        setError("Gallery access not available. In a real device, this would access the photo gallery.");
+        setIsMobile(false);
+        setError("Gallery access not available in browser. This feature requires a mobile device.");
+        toast({
+          title: "Gallery Not Available",
+          description: "Gallery access requires a native mobile device. Adding sample images instead.",
+        });
+        
+        // Add sample images for demonstration in browser
+        const newItems = SAMPLE_IMAGES.map((url, index) => ({
+          id: `sample-${Date.now()}-${index}`,
+          dataUrl: url,
+          type: 'image' as const
+        }));
+        
+        setMediaItems(prev => [...prev, ...newItems]);
         return;
       }
 
+      setIsMobile(true);
       const image = await camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -56,6 +82,19 @@ const MediaGallery = () => {
     setSelectedItem(null);
   };
 
+  const BrowserSimulationView = () => (
+    <Card className="p-6 flex flex-col items-center space-y-4">
+      <SmartphoneNfc className="h-16 w-16 text-muted-foreground" />
+      <h3 className="text-xl font-semibold">Mobile Device Required</h3>
+      <p className="text-center text-muted-foreground">
+        Gallery access requires a native mobile device. Click the button below to load sample images.
+      </p>
+      <Button variant="default" onClick={pickFromGallery}>
+        <Upload className="mr-2" /> Load Sample Images
+      </Button>
+    </Card>
+  );
+
   return (
     <div className="flex flex-col space-y-4">
       {error && (
@@ -73,11 +112,17 @@ const MediaGallery = () => {
 
       {mediaItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-md">
-          <Image className="h-16 w-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Your gallery is empty</p>
-          <Button variant="outline" className="mt-4" onClick={pickFromGallery}>
-            Import Media
-          </Button>
+          {isMobile === false ? (
+            <BrowserSimulationView />
+          ) : (
+            <>
+              <Image className="h-16 w-16 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Your gallery is empty</p>
+              <Button variant="outline" className="mt-4" onClick={pickFromGallery}>
+                Import Media
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
