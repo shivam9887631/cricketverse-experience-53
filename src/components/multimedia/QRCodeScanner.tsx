@@ -17,9 +17,13 @@ const QRCodeScanner = () => {
     // Cleanup scanner when component unmounts
     return () => {
       if (scannerRef.current && scanning) {
-        scannerRef.current.stop().catch(error => {
-          console.error("Failed to stop camera:", error);
-        });
+        try {
+          scannerRef.current.stop().catch(error => {
+            console.error("Failed to stop camera:", error);
+          });
+        } catch (err) {
+          console.error("Error stopping scanner on unmount:", err);
+        }
       }
     };
   }, [scanning]);
@@ -30,6 +34,7 @@ const QRCodeScanner = () => {
     setScanning(true);
 
     try {
+      // Create a new scanner instance
       const html5QrCode = new Html5Qrcode(scannerDivId);
       scannerRef.current = html5QrCode;
 
@@ -51,21 +56,29 @@ const QRCodeScanner = () => {
       ).catch((err) => {
         setError(`Failed to access camera: ${err}`);
         setScanning(false);
+        scannerRef.current = null;
       });
     } catch (err) {
       setError("QR Scanner initialization failed.");
       setScanning(false);
+      scannerRef.current = null;
     }
   };
 
   const stopScanner = () => {
-    if (scannerRef.current) {
+    if (scannerRef.current && scanning) {
       scannerRef.current.stop().then(() => {
         setScanning(false);
+        scannerRef.current = null;
       }).catch((error) => {
         console.error("Failed to stop scanner:", error);
         setScanning(false);
+        scannerRef.current = null;
       });
+    } else {
+      // Just update the state if we don't have an active scanner
+      setScanning(false);
+      scannerRef.current = null;
     }
   };
 
