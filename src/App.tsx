@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
 import PlayersList from "./pages/PlayersList";
+import Multimedia from "./pages/Multimedia";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const AnimationLayout = () => {
         <Route path="/players/:id" element={<PlayerProfile />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/multimedia" element={<Multimedia />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

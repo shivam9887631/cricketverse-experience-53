@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -19,6 +18,7 @@ const Navbar: React.FC = () => {
     { name: 'Matches', path: '/match', icon: <Trophy className="w-5 h-5" /> },
     { name: 'Tournament', path: '/tournament', icon: <Calendar className="w-5 h-5" /> },
     { name: 'Players', path: '/players', icon: <Users className="w-5 h-5" /> },
+    { name: 'Multimedia', path: '/multimedia', icon: <Trophy className="w-5 h-5" /> },
   ];
 
   const handleSignOut = async () => {

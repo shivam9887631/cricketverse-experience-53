@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,7 @@ import { generateMatchNotifications } from '@/utils/notificationUtils';
 import { toast } from '@/components/ui/use-toast';
 import { useFirestore } from '@/hooks/useDatabase';
 import { MatchActivity } from '@/utils/matchUtils';
+import { Timestamp } from 'firebase/firestore';
 
 const UserActivityList = () => {
   const { currentUser } = useAuth();
@@ -103,7 +103,12 @@ const UserActivityList = () => {
                     <p className="text-sm text-muted-foreground">{activity.details}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(activity.timestamp.toDate ? activity.timestamp.toDate() : activity.timestamp), { addSuffix: true })}
+                    {formatDistanceToNow(
+                      activity.timestamp instanceof Timestamp 
+                        ? activity.timestamp.toDate() 
+                        : new Date(activity.timestamp), 
+                      { addSuffix: true }
+                    )}
                   </p>
                 </div>
               </div>
