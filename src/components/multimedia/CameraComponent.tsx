@@ -1,13 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, Image, RotateCcw, Save, SmartphoneNfc } from 'lucide-react';
+import { Camera, Image, RotateCcw, Save, SmartphoneNfc, Upload } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getCapacitorCamera } from '@/services/capacitorService';
+import { getCapacitorCamera, isMobileBrowser } from '@/services/capacitorService';
 import { CameraResultType, CameraSource } from '@capacitor/camera';
 import { Card } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useToast } from '@/hooks/use-toast';
 
 interface CapturedPhoto {
@@ -18,8 +16,23 @@ interface CapturedPhoto {
 const CameraComponent = () => {
   const [photo, setPhoto] = useState<CapturedPhoto | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [isCapacitor, setIsCapacitor] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if we're on a mobile browser
+    setIsMobile(isMobileBrowser());
+    
+    // Check if Capacitor is available
+    const checkCapacitor = async () => {
+      const camera = await getCapacitorCamera();
+      setIsCapacitor(!!camera);
+    };
+    
+    checkCapacitor();
+  }, []);
 
   const takePhoto = async () => {
     try {
@@ -27,18 +40,23 @@ const CameraComponent = () => {
       const camera = await getCapacitorCamera();
       
       if (!camera) {
-        // Web fallback for development
-        setIsMobile(false);
-        setError("Camera not available in browser. This feature requires a mobile device.");
-        toast({
-          title: "Camera Not Available",
-          description: "Camera access requires a native mobile device. This is a development fallback.",
-          variant: "destructive"
-        });
+        if (isMobile) {
+          // Mobile browser fallback - use file input
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        } else {
+          // Desktop browser fallback
+          setError("Camera not available in browser. This feature requires a native mobile app.");
+          toast({
+            title: "Camera Not Available",
+            description: "Camera access works best in a native mobile app. This is a browser fallback.",
+            variant: "destructive"
+          });
+        }
         return;
       }
 
-      setIsMobile(true);
       const image = await camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -56,14 +74,33 @@ const CameraComponent = () => {
     }
   };
 
+  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhoto({
+        dataUrl: reader.result as string,
+        format: file.type.split('/')[1] || 'jpeg'
+      });
+    };
+    reader.onerror = () => {
+      setError('Failed to read selected file.');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const resetPhoto = () => {
     setPhoto(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const savePhoto = () => {
     if (!photo) return;
     
-    // In a real app, you would implement saving to device or cloud storage
     toast({
       title: "Photo Saved",
       description: "Your photo has been saved successfully.",
@@ -73,9 +110,11 @@ const CameraComponent = () => {
   const BrowserSimulationView = () => (
     <Card className="p-6 flex flex-col items-center space-y-4">
       <SmartphoneNfc className="h-16 w-16 text-muted-foreground" />
-      <h3 className="text-xl font-semibold">Mobile Device Required</h3>
+      <h3 className="text-xl font-semibold">Browser Compatibility Notice</h3>
       <p className="text-center text-muted-foreground">
-        Camera access requires a native mobile device. This is a browser simulation view.
+        {isMobile 
+          ? "Camera access may be limited in mobile browsers. For best experience, try using the file upload option."
+          : "Camera access requires a mobile device or native app. This is a browser simulation view."}
       </p>
       <div className="grid grid-cols-2 gap-4 w-full mt-4">
         <Button variant="outline" onClick={() => {
@@ -91,9 +130,11 @@ const CameraComponent = () => {
           Simulate Photo
         </Button>
         <Button onClick={() => {
-          window.open('https://capacitorjs.com/docs/apis/camera', '_blank');
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
         }}>
-          Learn More
+          <Upload className="mr-2" /> Upload Image
         </Button>
       </div>
     </Card>
@@ -115,17 +156,27 @@ const CameraComponent = () => {
             alt="Captured" 
             className="w-full h-full object-cover"
           />
-        ) : isMobile === false ? (
-          <BrowserSimulationView />
-        ) : (
+        ) : isCapacitor ? (
           <Camera className="h-16 w-16 text-muted-foreground" />
+        ) : (
+          <BrowserSimulationView />
         )}
       </div>
+
+      {/* Hidden file input for browser fallback */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        accept="image/*" 
+        className="hidden" 
+        onChange={handleFileInput} 
+        capture="environment"
+      />
 
       <div className="flex space-x-4">
         {!photo ? (
           <Button onClick={takePhoto}>
-            <Camera className="mr-2" /> Take Photo
+            <Camera className="mr-2" /> {isCapacitor ? "Take Photo" : (isMobile ? "Take/Upload Photo" : "Upload Photo")}
           </Button>
         ) : (
           <>

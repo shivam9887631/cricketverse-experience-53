@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Image, Plus, Upload, SmartphoneNfc } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getCapacitorCamera } from '@/services/capacitorService';
+import { getCapacitorCamera, isMobileBrowser } from '@/services/capacitorService';
 import { CameraResultType, CameraSource } from '@capacitor/camera';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -25,8 +25,23 @@ const MediaGallery = () => {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
-  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [isCapacitor, setIsCapacitor] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    // Check if we're on a mobile browser
+    setIsMobile(isMobileBrowser());
+    
+    // Check if Capacitor is available
+    const checkCapacitor = async () => {
+      const camera = await getCapacitorCamera();
+      setIsCapacitor(!!camera);
+    };
+    
+    checkCapacitor();
+  }, []);
 
   const pickFromGallery = async () => {
     try {
@@ -34,26 +49,31 @@ const MediaGallery = () => {
       const camera = await getCapacitorCamera();
       
       if (!camera) {
-        // Web fallback for development
-        setIsMobile(false);
-        setError("Gallery access not available in browser. This feature requires a mobile device.");
-        toast({
-          title: "Gallery Not Available",
-          description: "Gallery access requires a native mobile device. Adding sample images instead.",
-        });
-        
-        // Add sample images for demonstration in browser
-        const newItems = SAMPLE_IMAGES.map((url, index) => ({
-          id: `sample-${Date.now()}-${index}`,
-          dataUrl: url,
-          type: 'image' as const
-        }));
-        
-        setMediaItems(prev => [...prev, ...newItems]);
+        if (isMobile) {
+          // Mobile browser fallback - use file input
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        } else {
+          // Desktop browser fallback with sample images
+          setError("Gallery access not available in browser. Loading sample images.");
+          toast({
+            title: "Gallery Not Available",
+            description: "Gallery access works best in a native mobile app. Adding sample images instead.",
+          });
+          
+          // Add sample images for demonstration
+          const newItems = SAMPLE_IMAGES.map((url, index) => ({
+            id: `sample-${Date.now()}-${index}`,
+            dataUrl: url,
+            type: 'image' as const
+          }));
+          
+          setMediaItems(prev => [...prev, ...newItems]);
+        }
         return;
       }
 
-      setIsMobile(true);
       const image = await camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -74,6 +94,30 @@ const MediaGallery = () => {
     }
   };
 
+  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const newItems: MediaItem[] = [];
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const newItem: MediaItem = {
+          id: `file-${Date.now()}-${file.name}`,
+          dataUrl: reader.result as string,
+          type: file.type.startsWith('image/') ? 'image' : 'video'
+        };
+        
+        newItems.push(newItem);
+        if (newItems.length === files.length) {
+          setMediaItems(prev => [...prev, ...newItems]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const viewItem = (item: MediaItem) => {
     setSelectedItem(item);
   };
@@ -85,13 +129,37 @@ const MediaGallery = () => {
   const BrowserSimulationView = () => (
     <Card className="p-6 flex flex-col items-center space-y-4">
       <SmartphoneNfc className="h-16 w-16 text-muted-foreground" />
-      <h3 className="text-xl font-semibold">Mobile Device Required</h3>
+      <h3 className="text-xl font-semibold">Browser Compatibility Notice</h3>
       <p className="text-center text-muted-foreground">
-        Gallery access requires a native mobile device. Click the button below to load sample images.
+        {isMobile 
+          ? "Gallery access may be limited in mobile browsers. Try using the file upload option."
+          : "Gallery access works best in a native mobile app. Click the button below to load sample images."}
       </p>
-      <Button variant="default" onClick={pickFromGallery}>
-        <Upload className="mr-2" /> Load Sample Images
-      </Button>
+      <div className="grid grid-cols-2 gap-4 w-full mt-4">
+        <Button variant="outline" onClick={() => {
+          const newItems = SAMPLE_IMAGES.map((url, index) => ({
+            id: `sample-${Date.now()}-${index}`,
+            dataUrl: url,
+            type: 'image' as const
+          }));
+          
+          setMediaItems(prev => [...prev, ...newItems]);
+          
+          toast({
+            title: "Sample Images Added",
+            description: "Sample images have been added to your gallery.",
+          });
+        }}>
+          Load Samples
+        </Button>
+        <Button onClick={() => {
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}>
+          <Upload className="mr-2" /> Upload Files
+        </Button>
+      </div>
     </Card>
   );
 
@@ -106,13 +174,23 @@ const MediaGallery = () => {
 
       <div className="flex justify-end mb-4">
         <Button onClick={pickFromGallery}>
-          <Plus className="mr-2" /> Add Media
+          <Plus className="mr-2" /> {isCapacitor ? "Add Media" : "Upload Media"}
         </Button>
       </div>
 
+      {/* Hidden file input for browser fallback */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        accept="image/*,video/*" 
+        className="hidden" 
+        onChange={handleFileInput} 
+        multiple
+      />
+
       {mediaItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-muted rounded-md">
-          {isMobile === false ? (
+          {!isCapacitor ? (
             <BrowserSimulationView />
           ) : (
             <>
