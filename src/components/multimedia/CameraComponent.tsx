@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Camera, Image, RotateCcw, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getCapacitorCamera } from '@/services/capacitorService';
+import { CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface CapturedPhoto {
   dataUrl: string;
@@ -27,8 +28,8 @@ const CameraComponent = () => {
       const image = await camera.getPhoto({
         quality: 90,
         allowEditing: false,
-        resultType: 'dataUrl',
-        source: 'CAMERA'
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera
       });
 
       setPhoto({

@@ -1,10 +1,11 @@
 
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 
 // Check if Camera is available (will be true on native builds but not in web browser)
 export const getCapacitorCamera = async () => {
   // Check if we're in a Capacitor app
-  if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+  if (Capacitor.isNativePlatform()) {
     try {
       await Camera.requestPermissions();
       return Camera;

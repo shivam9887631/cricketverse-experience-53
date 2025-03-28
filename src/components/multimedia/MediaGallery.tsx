@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Image, Plus } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getCapacitorCamera } from '@/services/capacitorService';
+import { CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface MediaItem {
   id: string;
@@ -30,8 +31,8 @@ const MediaGallery = () => {
       const image = await camera.getPhoto({
         quality: 90,
         allowEditing: false,
-        resultType: 'dataUrl',
-        source: 'PHOTOS'
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Photos
       });
 
       const newItem: MediaItem = {
