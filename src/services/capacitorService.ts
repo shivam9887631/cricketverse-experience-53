@@ -34,3 +34,20 @@ export const blobToDataURL = (blob: Blob): Promise<string> => {
     reader.readAsDataURL(blob);
   });
 };
+
+// Mobile browser camera access using input file with camera
+export const takeMobilePhoto = (): Promise<HTMLInputElement> => {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Use the back camera by default
+    
+    input.onchange = () => {
+      resolve(input);
+    };
+    
+    // Trigger file selection dialog
+    input.click();
+  });
+};

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, Image, RotateCcw, Save, SmartphoneNfc, Upload } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getCapacitorCamera, isMobileBrowser } from '@/services/capacitorService';
+import { getCapacitorCamera, isMobileBrowser, takeMobilePhoto } from '@/services/capacitorService';
 import { CameraResultType, CameraSource } from '@capacitor/camera';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ const CameraComponent = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCapacitor, setIsCapacitor] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -37,23 +38,25 @@ const CameraComponent = () => {
   const takePhoto = async () => {
     try {
       setError(null);
+      setIsCapturing(true);
       const camera = await getCapacitorCamera();
       
       if (!camera) {
         if (isMobile) {
-          // Mobile browser fallback - use file input
+          // Use direct input with capture for mobile browsers
           if (fileInputRef.current) {
             fileInputRef.current.click();
           }
         } else {
           // Desktop browser fallback
-          setError("Camera not available in browser. This feature requires a native mobile app.");
+          setError("Camera not available in browser. This feature requires a native mobile app or mobile browser.");
           toast({
             title: "Camera Not Available",
-            description: "Camera access works best in a native mobile app. This is a browser fallback.",
+            description: "Camera access works best in a native mobile app or on a mobile device.",
             variant: "destructive"
           });
         }
+        setIsCapturing(false);
         return;
       }
 
@@ -68,9 +71,11 @@ const CameraComponent = () => {
         dataUrl: image.dataUrl || '',
         format: image.format
       });
+      setIsCapturing(false);
     } catch (error) {
       console.error('Error taking photo:', error);
       setError('Failed to take photo. Please check camera permissions.');
+      setIsCapturing(false);
     }
   };
 
@@ -83,6 +88,11 @@ const CameraComponent = () => {
       setPhoto({
         dataUrl: reader.result as string,
         format: file.type.split('/')[1] || 'jpeg'
+      });
+      
+      toast({
+        title: "Photo Captured",
+        description: "Photo has been successfully captured.",
       });
     };
     reader.onerror = () => {
@@ -107,13 +117,33 @@ const CameraComponent = () => {
     });
   };
 
+  const MobilePromptView = () => (
+    <Card className="p-6 flex flex-col items-center space-y-4">
+      <Camera className="h-16 w-16 text-muted-foreground" />
+      <h3 className="text-xl font-semibold">Camera Access</h3>
+      <p className="text-center text-muted-foreground">
+        Tap the button below to take a photo with your device camera.
+      </p>
+      <Button 
+        onClick={() => {
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }}
+        disabled={isCapturing}
+      >
+        <Camera className="mr-2" /> Take Photo
+      </Button>
+    </Card>
+  );
+
   const BrowserSimulationView = () => (
     <Card className="p-6 flex flex-col items-center space-y-4">
       <SmartphoneNfc className="h-16 w-16 text-muted-foreground" />
       <h3 className="text-xl font-semibold">Browser Compatibility Notice</h3>
       <p className="text-center text-muted-foreground">
         {isMobile 
-          ? "Camera access may be limited in mobile browsers. For best experience, try using the file upload option."
+          ? "Tap the button below to use your device camera."
           : "Camera access requires a mobile device or native app. This is a browser simulation view."}
       </p>
       <div className="grid grid-cols-2 gap-4 w-full mt-4">
@@ -158,6 +188,8 @@ const CameraComponent = () => {
           />
         ) : isCapacitor ? (
           <Camera className="h-16 w-16 text-muted-foreground" />
+        ) : isMobile ? (
+          <MobilePromptView />
         ) : (
           <BrowserSimulationView />
         )}
@@ -175,9 +207,11 @@ const CameraComponent = () => {
 
       <div className="flex space-x-4">
         {!photo ? (
-          <Button onClick={takePhoto}>
-            <Camera className="mr-2" /> {isCapacitor ? "Take Photo" : (isMobile ? "Take/Upload Photo" : "Upload Photo")}
-          </Button>
+          isCapacitor && (
+            <Button onClick={takePhoto} disabled={isCapturing}>
+              <Camera className="mr-2" /> {isCapturing ? "Processing..." : "Take Photo"}
+            </Button>
+          )
         ) : (
           <>
             <Button variant="outline" onClick={resetPhoto}>
