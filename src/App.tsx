@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import SplashScreen from "./components/SplashScreen";
 import PlayersList from "./pages/PlayersList";
 import Multimedia from "./pages/Multimedia";
+import DeviceFeaturesPage from "./pages/DeviceFeatures";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const AnimationLayout = () => {
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/multimedia" element={<Multimedia />} />
+        <Route path="/device-features" element={<DeviceFeaturesPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
