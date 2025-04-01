@@ -1,4 +1,3 @@
-
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { Device } from '@capacitor/device';
 import { Motion } from '@capacitor/motion';
@@ -34,25 +33,50 @@ export const getCurrentPosition = async (): Promise<Position | null> => {
             },
             (error) => {
               console.error('Browser geolocation error:', error);
-              reject(error);
+              // Convert browser error to a more user-friendly message
+              let errorMessage = "Unable to retrieve location";
+              
+              switch(error.code) {
+                case 1:
+                  errorMessage = "Location permission denied. Please enable location permissions in your browser settings.";
+                  break;
+                case 2:
+                  errorMessage = "Location not available. Please check your device settings.";
+                  break;
+                case 3:
+                  errorMessage = "Location request timed out. Please try again.";
+                  break;
+              }
+              
+              reject(new Error(errorMessage));
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 0
             }
           );
         });
+      } else {
+        throw new Error("Geolocation is not supported by your browser");
       }
-      return null;
     }
     
-    // Request permissions first
+    // Request permissions first for native platforms
     const permissions = await Geolocation.requestPermissions();
+    
     if (permissions.location === 'granted') {
-      return await Geolocation.getCurrentPosition();
+      return await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000
+      });
     } else {
-      console.error('Location permission not granted');
-      return null;
+      throw new Error('Location permission not granted. Please enable location permissions in your device settings.');
     }
   } catch (error) {
     console.error('Error getting location:', error);
-    return null;
+    // Re-throw the error so it can be handled by the component
+    throw error;
   }
 };
 
