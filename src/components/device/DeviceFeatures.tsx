@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,7 +75,12 @@ const DeviceFeatures = () => {
       setDeviceInfo(info);
       
       const battery = await getBatteryInfo();
-      setBatteryInfo(battery);
+      if (battery) {
+        setBatteryInfo({
+          level: battery.batteryLevel,
+          isCharging: battery.isCharging
+        });
+      }
       
       toast({
         title: "Device Info Retrieved",
@@ -240,7 +244,6 @@ const DeviceFeatures = () => {
     </Card>
   );
 
-  // Show compatibility notice for non-mobile browsers
   if (!isMobile && !isNative) {
     return (
       <div className="space-y-4">
