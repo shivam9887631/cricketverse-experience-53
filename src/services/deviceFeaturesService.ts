@@ -129,16 +129,15 @@ export const startAccelerometerUpdates = async (callback: (data: MotionData) => 
       return false;
     }
     
-    // On native devices
-    const permissionState = await Motion.requestPermissions();
-    if (permissionState.accel === 'granted') {
-      // Start listening for motion events
+    // On native devices - Fix: Motion API doesn't have requestPermissions
+    // Instead, we'll directly add the listener and handle permission errors
+    try {
       motionListener = await Motion.addListener('accel', (data) => {
         callback(data as MotionData);
       });
       return true;
-    } else {
-      console.error('Motion permission not granted');
+    } catch (err) {
+      console.error('Motion permission issue or not supported:', err);
       return false;
     }
   } catch (error) {
