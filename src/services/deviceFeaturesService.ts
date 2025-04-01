@@ -1,3 +1,4 @@
+
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { Device } from '@capacitor/device';
 import { Motion } from '@capacitor/motion';
@@ -41,7 +42,7 @@ export const getCurrentPosition = async (): Promise<Position | null> => {
                   errorMessage = "Location permission denied. Please enable location permissions in your browser settings.";
                   break;
                 case 2:
-                  errorMessage = "Location not available. Please check your device settings.";
+                  errorMessage = "Location not available. Please check your device settings and ensure you have an active internet connection.";
                   break;
                 case 3:
                   errorMessage = "Location request timed out. Please try again.";
@@ -52,7 +53,7 @@ export const getCurrentPosition = async (): Promise<Position | null> => {
             },
             {
               enableHighAccuracy: true,
-              timeout: 15000,
+              timeout: 30000, // Increased timeout
               maximumAge: 0
             }
           );
@@ -68,7 +69,7 @@ export const getCurrentPosition = async (): Promise<Position | null> => {
     if (permissions.location === 'granted') {
       return await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
-        timeout: 15000
+        timeout: 30000 // Increased timeout
       });
     } else {
       throw new Error('Location permission not granted. Please enable location permissions in your device settings.');
