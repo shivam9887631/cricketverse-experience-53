@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, AlertTriangle, RefreshCw } from 'lucide-react';
+import { MapPin, AlertTriangle, RefreshCw, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentPosition } from '@/services/deviceFeaturesService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -75,18 +75,17 @@ const LocationFeature = () => {
           <div className="space-y-2">
             <div><strong>Latitude:</strong> {location.latitude.toFixed(6)}</div>
             <div><strong>Longitude:</strong> {location.longitude.toFixed(6)}</div>
-            <div className="flex space-x-2 mt-4">
+            <div className="flex flex-wrap gap-2 mt-4">
               <Button 
                 variant="outline" 
                 onClick={handleGetLocation} 
                 disabled={isLoading}
                 className="flex items-center"
               >
-                {isLoading ? 'Refreshing...' : (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh Location
-                  </>
+                {isLoading ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Refreshing...</>
+                ) : (
+                  <><RefreshCw className="h-4 w-4 mr-2" /> Refresh Location</>
                 )}
               </Button>
               
@@ -97,8 +96,9 @@ const LocationFeature = () => {
                     const mapsUrl = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
                     window.open(mapsUrl, '_blank');
                   }}
+                  className="flex items-center"
                 >
-                  View on Map
+                  <Map className="h-4 w-4 mr-2" /> View on Map
                 </Button>
               )}
             </div>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Trophy, Users, User, Calendar, Bell, Menu, X, Home, ChevronDown, LogOut } from 'lucide-react';
+import { Trophy, Users, User, Calendar, Bell, Menu, X, Home, ChevronDown, LogOut, Smartphone } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/authService';
 
 const Navbar: React.FC = () => {
@@ -19,6 +19,7 @@ const Navbar: React.FC = () => {
     { name: 'Tournament', path: '/tournament', icon: <Calendar className="w-5 h-5" /> },
     { name: 'Players', path: '/players', icon: <Users className="w-5 h-5" /> },
     { name: 'Multimedia', path: '/multimedia', icon: <Trophy className="w-5 h-5" /> },
+    { name: 'Device Features', path: '/device-features', icon: <Smartphone className="w-5 h-5" /> },
   ];
 
   const handleSignOut = async () => {
