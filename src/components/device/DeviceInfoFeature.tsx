@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Battery, Smartphone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getDeviceInfo, getBatteryInfo } from '@/services/deviceFeaturesService';
+import { testId, TEST_IDS } from '@/utils/testUtils';
 
 const DeviceInfoFeature = () => {
   const [deviceInfo, setDeviceInfo] = useState<any>(null);
@@ -36,7 +37,7 @@ const DeviceInfoFeature = () => {
   };
 
   return (
-    <Card>
+    <Card {...testId(TEST_IDS.DEVICE_INFO_CARD)}>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Smartphone className="mr-2" /> Device Information
@@ -65,12 +66,18 @@ const DeviceInfoFeature = () => {
               variant="outline" 
               onClick={handleGetDeviceInfo} 
               className="mt-2"
+              {...testId('refresh-device-info-button')}
             >
               Refresh Info
             </Button>
           </div>
         ) : (
-          <Button onClick={handleGetDeviceInfo}>Get Device Info</Button>
+          <Button 
+            onClick={handleGetDeviceInfo}
+            {...testId('get-device-info-button')}
+          >
+            Get Device Info
+          </Button>
         )}
       </CardContent>
     </Card>

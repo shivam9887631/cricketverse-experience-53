@@ -51,9 +51,9 @@ public class DeviceFeaturesTest {
 
     @Test
     public void testLocationFeature() {
-        // Navigate to Device Features screen
+        // Navigate to Device Features screen using data-testid
         UiObject2 navMenu = mDevice.wait(
-            Until.findObject(By.desc("Navigation Menu")), 
+            Until.findObject(By.desc(TestConstants.NAV_MENU)), 
             LAUNCH_TIMEOUT
         );
         assertNotNull("Navigation menu not found", navMenu);
@@ -68,18 +68,18 @@ public class DeviceFeaturesTest {
         
         // Test the Location feature
         UiObject2 locationCard = mDevice.wait(
-            Until.findObject(By.text("Location (GPS)")), 
+            Until.findObject(By.desc(TestConstants.LOCATION_CARD)), 
             LAUNCH_TIMEOUT
         );
         assertNotNull("Location feature card not found", locationCard);
         
         // Click on Get Location button if visible
-        UiObject2 getLocationButton = mDevice.findObject(By.text("Get Current Location"));
+        UiObject2 getLocationButton = mDevice.findObject(By.desc(TestConstants.GET_LOCATION_BUTTON));
         if (getLocationButton != null) {
             getLocationButton.click();
             // Wait for location to be retrieved
             boolean locationFound = mDevice.wait(
-                Until.hasObject(By.text("Latitude:")), 
+                Until.hasObject(By.textContains("Latitude:")), 
                 10000 // 10 seconds timeout for GPS
             );
             assertTrue("Location not retrieved successfully", locationFound);
@@ -90,17 +90,59 @@ public class DeviceFeaturesTest {
         }
         
         // Test View on Map button if location is found
-        UiObject2 viewMapButton = mDevice.findObject(By.text("View on Map"));
+        UiObject2 viewMapButton = mDevice.findObject(By.desc(TestConstants.VIEW_MAP_BUTTON));
         if (viewMapButton != null) {
             viewMapButton.click();
             // Wait for maps to open (can't fully test external app)
             // Just verify our app is still running after returning
             mDevice.pressBack(); // Return from maps
             boolean appReturned = mDevice.wait(
-                Until.hasObject(By.text("Location (GPS)")),
+                Until.hasObject(By.desc(TestConstants.LOCATION_CARD)),
                 LAUNCH_TIMEOUT
             );
             assertTrue("Failed to return to app after viewing map", appReturned);
+        }
+    }
+    
+    @Test
+    public void testDeviceInfoFeature() {
+        // Navigate to Device Features screen
+        UiObject2 navMenu = mDevice.wait(
+            Until.findObject(By.desc(TestConstants.NAV_MENU)), 
+            LAUNCH_TIMEOUT
+        );
+        assertNotNull("Navigation menu not found", navMenu);
+        navMenu.click();
+        
+        UiObject2 deviceFeatureLink = mDevice.wait(
+            Until.findObject(By.text("Device Features")), 
+            LAUNCH_TIMEOUT
+        );
+        assertNotNull("Device Features link not found", deviceFeatureLink);
+        deviceFeatureLink.click();
+        
+        // Test the Device Info feature
+        UiObject2 deviceInfoCard = mDevice.wait(
+            Until.findObject(By.desc(TestConstants.DEVICE_INFO_CARD)), 
+            LAUNCH_TIMEOUT
+        );
+        assertNotNull("Device info card not found", deviceInfoCard);
+        
+        // Click on Get Device Info button if it exists
+        UiObject2 getDeviceInfoButton = mDevice.findObject(By.text("Get Device Info"));
+        if (getDeviceInfoButton != null) {
+            getDeviceInfoButton.click();
+            
+            // Wait for device info to be retrieved
+            boolean deviceInfoDisplayed = mDevice.wait(
+                Until.hasObject(By.text("Platform:")), 
+                LAUNCH_TIMEOUT
+            );
+            assertTrue("Device info not retrieved successfully", deviceInfoDisplayed);
+        } else {
+            // If button not found, info might already be displayed
+            UiObject2 platformText = mDevice.findObject(By.text("Platform:"));
+            assertNotNull("Device information not displayed", platformText);
         }
     }
 }

@@ -10,6 +10,7 @@ import {
   MotionData,
   detectShake
 } from '@/services/deviceFeaturesService';
+import { testId, TEST_IDS } from '@/utils/testUtils';
 
 const MotionFeature = () => {
   const [motionData, setMotionData] = useState<MotionData | null>(null);
@@ -63,7 +64,7 @@ const MotionFeature = () => {
   };
 
   return (
-    <Card>
+    <Card {...testId(TEST_IDS.MOTION_FEATURE_CARD)}>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Activity className="mr-2" /> Motion Sensors
@@ -74,12 +75,13 @@ const MotionFeature = () => {
         <Button 
           onClick={handleToggleMotion}
           variant={isListening ? "destructive" : "default"}
+          {...testId('toggle-motion-button')}
         >
           {isListening ? "Stop Sensors" : "Start Sensors"}
         </Button>
         
         {isListening && motionData && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-4" {...testId('motion-data-display')}>
             <div>
               <h4 className="font-medium mb-1">Accelerometer</h4>
               <div className="grid grid-cols-3 gap-2 text-sm">
@@ -100,7 +102,7 @@ const MotionFeature = () => {
             
             <div className="flex items-center justify-between pt-2 border-t">
               <span className="font-medium">Shake Count:</span>
-              <span className="text-xl font-bold">{shakeCount}</span>
+              <span className="text-xl font-bold" {...testId('shake-count')}>{shakeCount}</span>
             </div>
           </div>
         )}
