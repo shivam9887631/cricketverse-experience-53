@@ -6,6 +6,7 @@ import { MapPin, AlertTriangle, RefreshCw, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentPosition } from '@/services/deviceFeaturesService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { testId, TEST_IDS } from '@/utils/testUtils';
 
 const LocationFeature = () => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -55,7 +56,7 @@ const LocationFeature = () => {
   }, []);
 
   return (
-    <Card>
+    <Card {...testId(TEST_IDS.LOCATION_CARD)}>
       <CardHeader>
         <CardTitle className="flex items-center">
           <MapPin className="mr-2" /> Location (GPS)
@@ -72,7 +73,7 @@ const LocationFeature = () => {
         )}
         
         {location ? (
-          <div className="space-y-2">
+          <div className="space-y-2" {...testId(TEST_IDS.LOCATION_DISPLAY)}>
             <div><strong>Latitude:</strong> {location.latitude.toFixed(6)}</div>
             <div><strong>Longitude:</strong> {location.longitude.toFixed(6)}</div>
             <div className="flex flex-wrap gap-2 mt-4">
@@ -81,6 +82,7 @@ const LocationFeature = () => {
                 onClick={handleGetLocation} 
                 disabled={isLoading}
                 className="flex items-center"
+                {...testId(TEST_IDS.REFRESH_LOCATION_BUTTON)}
               >
                 {isLoading ? (
                   <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Refreshing...</>
@@ -97,6 +99,7 @@ const LocationFeature = () => {
                     window.open(mapsUrl, '_blank');
                   }}
                   className="flex items-center"
+                  {...testId(TEST_IDS.VIEW_MAP_BUTTON)}
                 >
                   <Map className="h-4 w-4 mr-2" /> View on Map
                 </Button>
@@ -109,6 +112,7 @@ const LocationFeature = () => {
               onClick={handleGetLocation}
               disabled={isLoading}
               className="w-full sm:w-auto"
+              {...testId(TEST_IDS.GET_LOCATION_BUTTON)}
             >
               {isLoading ? (
                 <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Getting Location...</>
