@@ -49,8 +49,7 @@ public class DeviceFeaturesTest {
         mDevice.wait(Until.hasObject(By.pkg(PACKAGE_NAME).depth(0)), LAUNCH_TIMEOUT);
     }
 
-    @Test
-    public void testLocationFeature() {
+    private void navigateToDeviceFeatures() {
         // Navigate to Device Features screen using data-testid
         UiObject2 navMenu = mDevice.wait(
             Until.findObject(By.desc(TestConstants.NAV_MENU)), 
@@ -65,6 +64,11 @@ public class DeviceFeaturesTest {
         );
         assertNotNull("Device Features link not found", deviceFeatureLink);
         deviceFeatureLink.click();
+    }
+
+    @Test
+    public void testLocationFeature() {
+        navigateToDeviceFeatures();
         
         // Test the Location feature
         UiObject2 locationCard = mDevice.wait(
@@ -106,20 +110,7 @@ public class DeviceFeaturesTest {
     
     @Test
     public void testDeviceInfoFeature() {
-        // Navigate to Device Features screen
-        UiObject2 navMenu = mDevice.wait(
-            Until.findObject(By.desc(TestConstants.NAV_MENU)), 
-            LAUNCH_TIMEOUT
-        );
-        assertNotNull("Navigation menu not found", navMenu);
-        navMenu.click();
-        
-        UiObject2 deviceFeatureLink = mDevice.wait(
-            Until.findObject(By.text("Device Features")), 
-            LAUNCH_TIMEOUT
-        );
-        assertNotNull("Device Features link not found", deviceFeatureLink);
-        deviceFeatureLink.click();
+        navigateToDeviceFeatures();
         
         // Test the Device Info feature
         UiObject2 deviceInfoCard = mDevice.wait(
@@ -129,7 +120,7 @@ public class DeviceFeaturesTest {
         assertNotNull("Device info card not found", deviceInfoCard);
         
         // Click on Get Device Info button if it exists
-        UiObject2 getDeviceInfoButton = mDevice.findObject(By.text("Get Device Info"));
+        UiObject2 getDeviceInfoButton = mDevice.findObject(By.desc(TestConstants.GET_DEVICE_INFO_BUTTON));
         if (getDeviceInfoButton != null) {
             getDeviceInfoButton.click();
             
@@ -144,5 +135,52 @@ public class DeviceFeaturesTest {
             UiObject2 platformText = mDevice.findObject(By.text("Platform:"));
             assertNotNull("Device information not displayed", platformText);
         }
+    }
+    
+    @Test
+    public void testMotionFeature() {
+        navigateToDeviceFeatures();
+        
+        // Test the Motion Sensors feature
+        UiObject2 motionCard = mDevice.wait(
+            Until.findObject(By.desc(TestConstants.MOTION_FEATURE_CARD)), 
+            LAUNCH_TIMEOUT
+        );
+        assertNotNull("Motion feature card not found", motionCard);
+        
+        // Click on Toggle Motion button
+        UiObject2 toggleMotionButton = mDevice.findObject(By.desc(TestConstants.TOGGLE_MOTION_BUTTON));
+        assertNotNull("Toggle motion button not found", toggleMotionButton);
+        toggleMotionButton.click();
+        
+        // Wait for motion data to be displayed
+        boolean motionDataDisplayed = mDevice.wait(
+            Until.hasObject(By.desc(TestConstants.MOTION_DATA_DISPLAY)), 
+            LAUNCH_TIMEOUT
+        );
+        assertTrue("Motion data not displayed after enabling sensors", motionDataDisplayed);
+        
+        // Check if shake count is displayed
+        UiObject2 shakeCount = mDevice.findObject(By.desc(TestConstants.SHAKE_COUNT));
+        assertNotNull("Shake count not displayed", shakeCount);
+        
+        // Turn off motion sensors before completing test
+        toggleMotionButton = mDevice.findObject(By.desc(TestConstants.TOGGLE_MOTION_BUTTON));
+        toggleMotionButton.click();
+    }
+    
+    @Test
+    public void testUIComponentIDs() {
+        navigateToDeviceFeatures();
+        
+        // Verify all UI components have proper test IDs
+        UiObject2 locationCard = mDevice.findObject(By.desc(TestConstants.LOCATION_CARD));
+        assertNotNull("Location card test ID missing", locationCard);
+        
+        UiObject2 deviceInfoCard = mDevice.findObject(By.desc(TestConstants.DEVICE_INFO_CARD));
+        assertNotNull("Device info card test ID missing", deviceInfoCard);
+        
+        UiObject2 motionCard = mDevice.findObject(By.desc(TestConstants.MOTION_FEATURE_CARD));
+        assertNotNull("Motion card test ID missing", motionCard);
     }
 }

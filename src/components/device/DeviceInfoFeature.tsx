@@ -66,7 +66,7 @@ const DeviceInfoFeature = () => {
               variant="outline" 
               onClick={handleGetDeviceInfo} 
               className="mt-2"
-              {...testId('refresh-device-info-button')}
+              {...testId(TEST_IDS.REFRESH_DEVICE_INFO_BUTTON)}
             >
               Refresh Info
             </Button>
@@ -74,7 +74,7 @@ const DeviceInfoFeature = () => {
         ) : (
           <Button 
             onClick={handleGetDeviceInfo}
-            {...testId('get-device-info-button')}
+            {...testId(TEST_IDS.GET_DEVICE_INFO_BUTTON)}
           >
             Get Device Info
           </Button>

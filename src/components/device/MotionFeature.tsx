@@ -75,13 +75,13 @@ const MotionFeature = () => {
         <Button 
           onClick={handleToggleMotion}
           variant={isListening ? "destructive" : "default"}
-          {...testId('toggle-motion-button')}
+          {...testId(TEST_IDS.TOGGLE_MOTION_BUTTON)}
         >
           {isListening ? "Stop Sensors" : "Start Sensors"}
         </Button>
         
         {isListening && motionData && (
-          <div className="mt-4 space-y-4" {...testId('motion-data-display')}>
+          <div className="mt-4 space-y-4" {...testId(TEST_IDS.MOTION_DATA_DISPLAY)}>
             <div>
               <h4 className="font-medium mb-1">Accelerometer</h4>
               <div className="grid grid-cols-3 gap-2 text-sm">
@@ -102,7 +102,7 @@ const MotionFeature = () => {
             
             <div className="flex items-center justify-between pt-2 border-t">
               <span className="font-medium">Shake Count:</span>
-              <span className="text-xl font-bold" {...testId('shake-count')}>{shakeCount}</span>
+              <span className="text-xl font-bold" {...testId(TEST_IDS.SHAKE_COUNT)}>{shakeCount}</span>
             </div>
           </div>
         )}
