@@ -14,7 +14,7 @@ export const isMobileBrowser = (): boolean => {
 export const getCapacitorCamera = async (): Promise<typeof Camera | null> => {
   try {
     // Check if the Camera plugin is available
-    if (window.Capacitor && Camera) {
+    if (typeof window !== 'undefined' && window.Capacitor && Camera) {
       // Check permissions before returning
       const permissionStatus = await Camera.checkPermissions();
       

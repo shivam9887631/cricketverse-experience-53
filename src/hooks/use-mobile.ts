@@ -21,7 +21,7 @@ export const useIsMobile = (): boolean => {
       
       // Check if running in a Capacitor app
       const isCapacitorApp = 
-        window.Capacitor !== undefined || 
+        (typeof window !== 'undefined' && window.Capacitor !== undefined) || 
         document.URL.startsWith('capacitor://') || 
         document.URL.startsWith('ionic://');
       

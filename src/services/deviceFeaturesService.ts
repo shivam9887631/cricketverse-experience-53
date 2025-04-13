@@ -1,4 +1,3 @@
-
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { Device, DeviceInfo, BatteryInfo } from '@capacitor/device';
 import { Motion } from '@capacitor/motion';
@@ -30,7 +29,7 @@ export const isNativePlatform = (): boolean => {
     document.URL.startsWith('capacitor://') ||
     document.URL.startsWith('http://localhost') ||
     document.URL.startsWith('ionic://') ||
-    !!window.Capacitor
+    (typeof window !== 'undefined' && !!window.Capacitor)
   );
 };
 
