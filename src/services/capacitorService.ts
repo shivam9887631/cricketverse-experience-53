@@ -1,53 +1,61 @@
 
 import { Camera, CameraResultType, CameraSource, Photo } from '@capacitor/camera';
-import { Capacitor } from '@capacitor/core';
 
-// Check if the device is a mobile device based on user agent
-export const isMobileBrowser = () => {
-  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+/**
+ * Check if running on a mobile browser
+ */
+export const isMobileBrowser = (): boolean => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-// Check if Camera is available (will be true on native builds but not in web browser)
-export const getCapacitorCamera = async () => {
-  // Check if we're in a Capacitor app
-  if (Capacitor.isNativePlatform()) {
-    try {
-      await Camera.requestPermissions();
+/**
+ * Get Capacitor Camera safely (returns null if not available)
+ */
+export const getCapacitorCamera = async (): Promise<typeof Camera | null> => {
+  try {
+    // Check if the Camera plugin is available
+    if (window.Capacitor && Camera) {
+      // Check permissions before returning
+      const permissionStatus = await Camera.checkPermissions();
+      
+      if (permissionStatus.camera !== 'granted') {
+        const requestResult = await Camera.requestPermissions();
+        if (requestResult.camera !== 'granted') {
+          console.warn('Camera permission not granted');
+          return null;
+        }
+      }
+      
       return Camera;
-    } catch (error) {
-      console.error("Camera permissions not granted:", error);
-      return null;
     }
+    return null;
+  } catch (error) {
+    console.error('Error initializing camera:', error);
+    return null;
   }
-  
-  // Return null if we're in a web browser
-  return null;
 };
 
-// Function to convert Blob to base64
-export const blobToDataURL = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
-
-// Mobile browser camera access using input file with camera
-export const takeMobilePhoto = (): Promise<HTMLInputElement> => {
-  return new Promise((resolve) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment'; // Use the back camera by default
+/**
+ * Take a photo using the device camera (mobile browsers)
+ * Fallback for when Capacitor camera is not available
+ */
+export const takeMobilePhoto = async (): Promise<Photo | null> => {
+  try {
+    // Try to use Capacitor Camera if available
+    const camera = await getCapacitorCamera();
     
-    input.onchange = () => {
-      resolve(input);
-    };
+    if (camera) {
+      return await camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera
+      });
+    }
     
-    // Trigger file selection dialog
-    input.click();
-  });
+    return null;
+  } catch (error) {
+    console.error('Error taking photo:', error);
+    return null;
+  }
 };
