@@ -10,4 +10,3 @@ const isCapacitorPlatform =
 
 // Load app with appropriate entry point
 createRoot(document.getElementById('root')!).render(<MobileApp />);
-
