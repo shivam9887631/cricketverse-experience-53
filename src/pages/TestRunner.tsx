@@ -93,7 +93,7 @@ const TestRunnerPage: React.FC = () => {
         <CardHeader>
           <CardTitle>Console Output</CardTitle>
           <CardDescription>
-            Check browser console (F12 > Console) for detailed test logs
+            Check browser console (F12 &gt; Console) for detailed test logs
           </CardDescription>
         </CardHeader>
         <CardContent>
