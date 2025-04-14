@@ -9,6 +9,5 @@ const isCapacitorPlatform =
   (typeof window !== 'undefined' && window.Capacitor !== undefined);
 
 // Load app with appropriate entry point
-createRoot(document.getElementById('root')!).render(
-  isCapacitorPlatform ? <MobileApp /> : <MobileApp />
-);
+createRoot(document.getElementById('root')!).render(<MobileApp />);
+
