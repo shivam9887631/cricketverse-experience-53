@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -20,10 +19,10 @@ import SplashScreen from "./components/SplashScreen";
 import PlayersList from "./pages/PlayersList";
 import Multimedia from "./pages/Multimedia";
 import DeviceFeaturesPage from "./pages/DeviceFeatures";
+import TestRunnerPage from './pages/TestRunner';
 
 const queryClient = new QueryClient();
 
-// AnimationLayout component to handle page transitions
 const AnimationLayout = () => {
   const location = useLocation();
   
@@ -41,6 +40,7 @@ const AnimationLayout = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/multimedia" element={<Multimedia />} />
         <Route path="/device-features" element={<DeviceFeaturesPage />} />
+        <Route path="/tests" element={<TestRunnerPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
