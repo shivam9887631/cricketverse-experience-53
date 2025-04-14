@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { testRunner } from '../utils/testRunner';
 import '../tests/deviceFeatureTests';
@@ -52,10 +51,10 @@ const TestRunnerPage: React.FC = () => {
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-medium">Test Summary</h3>
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="bg-green-50">
+                  <Badge variant="default" className="bg-green-50">
                     {testResults.passed} Passed
                   </Badge>
-                  <Badge variant="outline" className="bg-red-50">
+                  <Badge variant="destructive" className="bg-red-50">
                     {testResults.failed} Failed
                   </Badge>
                 </div>
@@ -72,7 +71,7 @@ const TestRunnerPage: React.FC = () => {
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-medium">{result.name}</span>
-                      <Badge variant={result.passed ? "success" : "destructive"}>
+                      <Badge variant={result.passed ? "default" : "destructive"}>
                         {result.passed ? "PASS" : "FAIL"}
                       </Badge>
                     </div>
