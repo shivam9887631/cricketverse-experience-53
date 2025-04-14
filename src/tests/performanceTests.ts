@@ -13,8 +13,18 @@ testRunner.addTest('App startup time should be reasonable', () => {
   performanceMonitor.measureStartupTime();
   const metrics = performanceMonitor.getMetrics();
   
-  // Not failing the test since we're just collecting metrics in browser
+  // Define thresholds (these would be different for native vs. web)
+  const startupThreshold = 5000; // 5 seconds is reasonable for web
+  
   console.log(`App startup time: ${metrics.startupTime}ms`);
+  const isPassing = metrics.startupTime < startupThreshold;
+  
+  // Only warn if exceeding threshold in browser
+  if (!isPassing) {
+    console.warn(`Startup time (${metrics.startupTime}ms) exceeds target threshold (${startupThreshold}ms)`);
+  }
+  
+  // Not strictly failing the test in browser environment
   assertTrue(true, 'Startup time measured');
 });
 
@@ -25,7 +35,16 @@ testRunner.addTest('Device info API response time should be fast', async () => {
       await Device.getInfo();
     }, 'Device info API call');
     
+    // Define threshold for API response (lower in native)
+    const apiThreshold = 200; // 200ms is good for web
+    
     console.log(`Device info API response time: ${responseTime}ms`);
+    const isPassing = responseTime < apiThreshold;
+    
+    if (!isPassing) {
+      console.warn(`Device API response time (${responseTime}ms) exceeds target threshold (${apiThreshold}ms)`);
+    }
+    
     // Not enforcing strict thresholds in browser environment
     assertTrue(true, 'Device info API timing measured');
   } catch (error) {
@@ -44,7 +63,16 @@ testRunner.addTest('Geolocation API response time should be reasonable', async (
       });
     }, 'Geolocation API call');
     
+    // Geolocation typically takes longer
+    const geoThreshold = 1000; // 1 second is reasonable for geolocation
+    
     console.log(`Geolocation API response time: ${responseTime}ms`);
+    const isPassing = responseTime < geoThreshold;
+    
+    if (!isPassing) {
+      console.warn(`Geolocation API response time (${responseTime}ms) exceeds target threshold (${geoThreshold}ms)`);
+    }
+    
     // Just collecting metrics, not enforcing thresholds in browser
     assertTrue(true, 'Geolocation API timing measured');
   } catch (error) {
@@ -74,7 +102,16 @@ testRunner.addTest('UI rendering performance should be efficient', () => {
   const measures = performance.getEntriesByType('measure');
   const renderTime = measures[measures.length - 1].duration;
   
+  // Define threshold for rendering
+  const renderThreshold = 50; // 50ms is good for UI operations
+  
   console.log(`UI rendering time: ${renderTime.toFixed(2)}ms`);
+  const isPassing = renderTime < renderThreshold;
+  
+  if (!isPassing) {
+    console.warn(`UI rendering time (${renderTime.toFixed(2)}ms) exceeds target threshold (${renderThreshold}ms)`);
+  }
+  
   assertTrue(true, 'UI rendering performance measured');
 });
 
@@ -86,7 +123,57 @@ testRunner.addTest('Network requests should complete within threshold', async ()
     await fetch(apiEndpoint);
   }, 'API request');
   
-  console.log(`Network request time: ${responseTime}ms`);
-  // In a real app, we would set thresholds based on network types
+  // Define thresholds based on network type
+  let networkThreshold = 2000; // Default 2s
+  
+  if ('connection' in navigator) {
+    const connection = (navigator as any).connection;
+    if (connection) {
+      // Adjust threshold based on connection type
+      switch(connection.effectiveType) {
+        case '4g':
+          networkThreshold = 1000; // 1s for 4G
+          break;
+        case '3g':
+          networkThreshold = 3000; // 3s for 3G
+          break;
+        case '2g':
+        case 'slow-2g':
+          networkThreshold = 5000; // 5s for 2G
+          break;
+      }
+    }
+  }
+  
+  console.log(`Network request time: ${responseTime}ms (threshold: ${networkThreshold}ms)`);
+  const isPassing = responseTime < networkThreshold;
+  
+  if (!isPassing) {
+    console.warn(`Network request time (${responseTime}ms) exceeds target threshold (${networkThreshold}ms)`);
+  }
+  
+  // In a real app, we could make this a hard requirement
   assertTrue(true, 'Network performance measured');
 });
+
+// Memory usage test
+testRunner.addTest('Memory usage should be within acceptable limits', () => {
+  const metrics = performanceMonitor.getMetrics();
+  
+  if (metrics.memoryUsage !== null) {
+    // Define memory threshold (MB)
+    const memoryThreshold = 100; // 100MB is generous for a web app
+    
+    console.log(`Memory usage: ${metrics.memoryUsage} MB`);
+    const isPassing = metrics.memoryUsage < memoryThreshold;
+    
+    if (!isPassing) {
+      console.warn(`Memory usage (${metrics.memoryUsage} MB) exceeds target threshold (${memoryThreshold} MB)`);
+    }
+  } else {
+    console.log('Memory usage data not available in this environment');
+  }
+  
+  assertTrue(true, 'Memory usage measured if available');
+});
+

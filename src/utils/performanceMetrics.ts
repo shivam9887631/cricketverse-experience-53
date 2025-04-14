@@ -9,6 +9,10 @@ interface PerformanceMetrics {
   memoryUsage: number | null;
   deviceInfo: string;
   networkCondition: string;
+  domLoadTime: number;
+  firstPaintTime: number;
+  largestContentfulPaintTime: number | null;
+  resourceLoadTimes: Record<string, number>;
 }
 
 // Define an extended Performance interface to handle non-standard memory property
@@ -27,7 +31,11 @@ class PerformanceMonitor {
     responseTime: 0,
     memoryUsage: null,
     deviceInfo: 'Unknown',
-    networkCondition: 'Unknown'
+    networkCondition: 'Unknown',
+    domLoadTime: 0,
+    firstPaintTime: 0,
+    largestContentfulPaintTime: null,
+    resourceLoadTimes: {}
   };
 
   /**
@@ -35,6 +43,7 @@ class PerformanceMonitor {
    */
   startMeasuring(): void {
     this.startTime = performance.now();
+    this.observeWebVitals();
     console.log('🔍 Performance monitoring started');
   }
 
@@ -62,6 +71,9 @@ class PerformanceMonitor {
       }
     }
 
+    // Calculate resource load times
+    this.calculateResourceMetrics();
+
     console.log('📊 Performance metrics collected:', this.metrics);
     return this.metrics;
   }
@@ -73,6 +85,7 @@ class PerformanceMonitor {
     if (window.performance && window.performance.timing) {
       const navTiming = window.performance.timing;
       this.metrics.startupTime = navTiming.domContentLoadedEventEnd - navTiming.navigationStart;
+      this.metrics.domLoadTime = navTiming.domComplete - navTiming.domLoading;
       console.log(`🚀 App startup time: ${this.metrics.startupTime}ms`);
     } else {
       console.warn('Navigation Timing API not supported');
@@ -99,6 +112,66 @@ class PerformanceMonitor {
     console.log(`⏱️ ${label}: ${duration}ms`);
     return duration;
   }
+
+  /**
+   * Calculate metrics for resource loading
+   */
+  private calculateResourceMetrics(): void {
+    if (performance.getEntriesByType) {
+      // Resource timing data
+      const resources = performance.getEntriesByType('resource');
+      const resourceTypes: Record<string, number[]> = {};
+      
+      resources.forEach(resource => {
+        const url = new URL(resource.name);
+        const fileType = url.pathname.split('.').pop() || 'unknown';
+        
+        if (!resourceTypes[fileType]) {
+          resourceTypes[fileType] = [];
+        }
+        
+        resourceTypes[fileType].push(resource.duration);
+      });
+      
+      // Calculate average load time by resource type
+      Object.keys(resourceTypes).forEach(type => {
+        const times = resourceTypes[type];
+        const avgTime = Math.round(times.reduce((sum, time) => sum + time, 0) / times.length);
+        this.metrics.resourceLoadTimes[type] = avgTime;
+      });
+    }
+  }
+
+  /**
+   * Observe Web Vital metrics using Performance Observer
+   */
+  private observeWebVitals(): void {
+    // First Paint & First Contentful Paint
+    const paintEntries = performance.getEntriesByType('paint');
+    const firstPaint = paintEntries.find(entry => entry.name === 'first-paint');
+    if (firstPaint) {
+      this.metrics.firstPaintTime = Math.round(firstPaint.startTime);
+    }
+
+    // Observe Largest Contentful Paint
+    if ('PerformanceObserver' in window) {
+      try {
+        const lcpObserver = new PerformanceObserver((entryList) => {
+          const entries = entryList.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry) {
+            this.metrics.largestContentfulPaintTime = Math.round(lastEntry.startTime);
+            console.log(`LCP: ${this.metrics.largestContentfulPaintTime}ms`);
+          }
+        });
+        
+        lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+      } catch (e) {
+        console.warn('LCP measurement not supported', e);
+      }
+    }
+  }
 }
 
 export const performanceMonitor = new PerformanceMonitor();
+

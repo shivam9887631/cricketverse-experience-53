@@ -9,6 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/table';
 
 const TestRunnerPage: React.FC = () => {
   const [testResults, setTestResults] = useState<{
@@ -68,10 +76,10 @@ const TestRunnerPage: React.FC = () => {
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-medium">Test Summary</h3>
                 <div className="flex gap-2">
-                  <Badge variant="default" className="bg-green-50">
+                  <Badge variant="success" className="bg-green-500">
                     {testResults.passed} Passed
                   </Badge>
-                  <Badge variant="destructive" className="bg-red-50">
+                  <Badge variant="destructive" className="bg-red-500">
                     {testResults.failed} Failed
                   </Badge>
                 </div>
@@ -95,7 +103,7 @@ const TestRunnerPage: React.FC = () => {
                       >
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{result.name}</span>
-                          <Badge variant={result.passed ? "default" : "destructive"}>
+                          <Badge variant={result.passed ? "success" : "destructive"}>
                             {result.passed ? "PASS" : "FAIL"}
                           </Badge>
                         </div>
@@ -114,15 +122,18 @@ const TestRunnerPage: React.FC = () => {
                   
                   {perfMetrics ? (
                     <div className="space-y-4" data-testid="performance-metrics">
-                      <div className="grid grid-cols-2 gap-3">
+                      <h4 className="font-medium mb-2 text-lg">Core Web Vitals</h4>
+                      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                         <Card className="p-3">
                           <div className="text-muted-foreground text-sm">Startup Time</div>
                           <div className="text-xl font-bold">{perfMetrics.startupTime} ms</div>
+                          <div className="text-xs text-muted-foreground mt-1">App initialization</div>
                         </Card>
                         
                         <Card className="p-3">
                           <div className="text-muted-foreground text-sm">Response Time</div>
                           <div className="text-xl font-bold">{perfMetrics.responseTime} ms</div>
+                          <div className="text-xs text-muted-foreground mt-1">UI responsiveness</div>
                         </Card>
                         
                         <Card className="p-3">
@@ -130,17 +141,64 @@ const TestRunnerPage: React.FC = () => {
                           <div className="text-xl font-bold">
                             {perfMetrics.memoryUsage !== null ? `${perfMetrics.memoryUsage} MB` : 'N/A'}
                           </div>
+                          <div className="text-xs text-muted-foreground mt-1">JS heap size</div>
                         </Card>
                         
                         <Card className="p-3">
-                          <div className="text-muted-foreground text-sm">Network</div>
-                          <div className="text-sm font-medium truncate">{perfMetrics.networkCondition}</div>
+                          <div className="text-muted-foreground text-sm">DOM Load</div>
+                          <div className="text-xl font-bold">{perfMetrics.domLoadTime} ms</div>
+                          <div className="text-xs text-muted-foreground mt-1">DOM rendering</div>
+                        </Card>
+                        
+                        <Card className="p-3">
+                          <div className="text-muted-foreground text-sm">First Paint</div>
+                          <div className="text-xl font-bold">
+                            {perfMetrics.firstPaintTime ? `${perfMetrics.firstPaintTime} ms` : 'N/A'}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">Initial rendering</div>
+                        </Card>
+                        
+                        <Card className="p-3">
+                          <div className="text-muted-foreground text-sm">LCP</div>
+                          <div className="text-xl font-bold">
+                            {perfMetrics.largestContentfulPaintTime ? `${perfMetrics.largestContentfulPaintTime} ms` : 'N/A'}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">Largest content</div>
                         </Card>
                       </div>
                       
-                      <div className="mt-3">
-                        <h4 className="font-medium mb-2">Device Information</h4>
-                        <p className="text-sm text-muted-foreground break-words">{perfMetrics.deviceInfo}</p>
+                      <h4 className="font-medium mt-6 mb-2 text-lg">Resource Load Times</h4>
+                      
+                      {Object.keys(perfMetrics.resourceLoadTimes).length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Resource Type</TableHead>
+                              <TableHead className="text-right">Avg Load Time (ms)</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Object.entries(perfMetrics.resourceLoadTimes).map(([type, time]) => (
+                              <TableRow key={type}>
+                                <TableCell className="font-medium">{type}</TableCell>
+                                <TableCell className="text-right">{time}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No resource data available</div>
+                      )}
+                      
+                      <div className="mt-6">
+                        <h4 className="font-medium mb-2 text-lg">Environment</h4>
+                        <Card className="p-4">
+                          <h5 className="text-sm font-medium mb-1">Network</h5>
+                          <p className="text-sm text-muted-foreground mb-3">{perfMetrics.networkCondition}</p>
+                          
+                          <h5 className="text-sm font-medium mb-1">Device</h5>
+                          <p className="text-sm text-muted-foreground break-words">{perfMetrics.deviceInfo}</p>
+                        </Card>
                       </div>
                     </div>
                   ) : (
@@ -178,3 +236,4 @@ const TestRunnerPage: React.FC = () => {
 };
 
 export default TestRunnerPage;
+
