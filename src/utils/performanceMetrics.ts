@@ -11,6 +11,15 @@ interface PerformanceMetrics {
   networkCondition: string;
 }
 
+// Define an extended Performance interface to handle non-standard memory property
+interface ExtendedPerformance extends Performance {
+  memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
 class PerformanceMonitor {
   private startTime: number = 0;
   private metrics: PerformanceMetrics = {
@@ -36,9 +45,10 @@ class PerformanceMonitor {
     const endTime = performance.now();
     this.metrics.responseTime = Math.round(endTime - this.startTime);
     
-    // Get memory usage if available in browser
-    if (performance.memory) {
-      this.metrics.memoryUsage = Math.round((performance.memory as any).usedJSHeapSize / (1024 * 1024));
+    // Get memory usage if available in browser (Chrome-specific feature)
+    const extendedPerf = performance as ExtendedPerformance;
+    if (extendedPerf.memory) {
+      this.metrics.memoryUsage = Math.round(extendedPerf.memory.usedJSHeapSize / (1024 * 1024));
     }
 
     // Get device info
