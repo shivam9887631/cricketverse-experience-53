@@ -1,4 +1,3 @@
-
 /**
  * Performance metrics collection utility for testing app performance
  */
@@ -433,15 +432,17 @@ class PerformanceMonitor {
     // Add passive event listeners where appropriate
     const scrollElements = document.querySelectorAll('.scroll-container');
     scrollElements.forEach(el => {
-      // Remove existing handlers and add optimized ones
-      const origScroll = el.onscroll;
-      el.onscroll = null;
-      
-      if (origScroll) {
+      // Check for scroll event handler and optimize it if it exists
+      const scrollHandler = (el as any).onscroll;
+      if (scrollHandler) {
+        // Remove existing handler 
+        (el as any).onscroll = null;
+        
+        // Add optimized passive event listener
         el.addEventListener('scroll', function(e) {
           // Use requestAnimationFrame to optimize
           window.requestAnimationFrame(() => {
-            origScroll.call(el, e);
+            scrollHandler.call(el, e);
           });
         }, { passive: true });
       }
