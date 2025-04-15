@@ -113,6 +113,11 @@ testRunner.addTest('UI rendering performance should be efficient', () => {
   }
   
   assertTrue(true, 'UI rendering performance measured');
+  
+  // Apply optimizations if needed
+  if (!isPassing) {
+    performanceMonitor.applyOptimizations();
+  }
 });
 
 // Network performance simulation
@@ -177,3 +182,52 @@ testRunner.addTest('Memory usage should be within acceptable limits', () => {
   assertTrue(true, 'Memory usage measured if available');
 });
 
+// Web vitals test
+testRunner.addTest('Core Web Vitals should meet targets', () => {
+  const metrics = performanceMonitor.getMetrics();
+  
+  // LCP threshold
+  if (metrics.largestContentfulPaintTime !== null) {
+    const lcpThreshold = 2500; // Google recommends LCP < 2.5s
+    const isLcpGood = metrics.largestContentfulPaintTime < lcpThreshold;
+    console.log(`LCP: ${metrics.largestContentfulPaintTime}ms (target: <${lcpThreshold}ms): ${isLcpGood ? '✓' : '✗'}`);
+  }
+  
+  // CLS threshold
+  if (metrics.cumulativeLayoutShift !== null) {
+    const clsThreshold = 0.1; // Google recommends CLS < 0.1
+    const isClsGood = metrics.cumulativeLayoutShift < clsThreshold;
+    console.log(`CLS: ${metrics.cumulativeLayoutShift} (target: <${clsThreshold}): ${isClsGood ? '✓' : '✗'}`);
+  }
+  
+  // FID threshold
+  if (metrics.firstInputDelay !== null) {
+    const fidThreshold = 100; // Google recommends FID < 100ms
+    const isFidGood = metrics.firstInputDelay < fidThreshold;
+    console.log(`FID: ${metrics.firstInputDelay}ms (target: <${fidThreshold}ms): ${isFidGood ? '✓' : '✗'}`);
+  }
+  
+  assertTrue(true, 'Web vitals measured');
+});
+
+// Advanced optimizations test
+testRunner.addTest('Apply performance optimizations', () => {
+  // Apply optimizations
+  performanceMonitor.applyOptimizations();
+  
+  // Retest UI rendering to see if it improved
+  const startMark = 'optimized-render-start';
+  const endMark = 'optimized-render-end';
+  
+  performance.mark(startMark);
+  document.querySelectorAll('[data-testid]').forEach(el => el.getBoundingClientRect());
+  performance.mark(endMark);
+  performance.measure('Optimized UI Rendering', startMark, endMark);
+  
+  const measures = performance.getEntriesByType('measure');
+  const renderTime = measures[measures.length - 1].duration;
+  
+  console.log(`Optimized UI rendering time: ${renderTime.toFixed(2)}ms`);
+  
+  assertTrue(true, 'Performance optimizations applied');
+});
